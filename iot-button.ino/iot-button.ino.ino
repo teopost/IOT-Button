@@ -33,7 +33,7 @@ const int LEDPINS[] = { 12 };
 // IFTTT Definitions
 // -----------------
 const char* IFTTT_URL= "maker.ifttt.com";
-const char* IFTTT_KEY= "dR7obzZI6bqblJX5nRpl8YA";
+const char* IFTTT_KEY= "dR7obzZI6bqblJX5nRpl8AY";
 const char* IFTTT_EVENT = "button";
 const char* IFTTT_NOTIFICATION_EVENT = "iot-event";
 
