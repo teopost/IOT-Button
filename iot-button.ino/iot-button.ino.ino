@@ -26,21 +26,9 @@
 #define LEDCOUNT 3
 
 // Pin definition
+// --------------
 #define SETUP_PIN 5
-
-// Global variables
-// ---------------
-String ssid = "";
-String password = "";
-
-
-// Pin configuration
-
-const int LEDPINS[] = { 12, 13, 14 };
-
-Ticker spinticker;
-
-volatile int spincount;
+const int LEDPINS[] = { 12 };
 
 // IFTTT Definitions
 // -----------------
@@ -51,17 +39,47 @@ const char* IFTTT_NOTIFICATION_EVENT = "iot-event";
 
 // Prototypes
 // ----------
-String makePage(String title, String contents);
-String urlDecode(String input);
 ESP8266WebServer WEB_SERVER(80);
 void setupMode();
-boolean loadSavedConfig();
 boolean triggerButtonEvent(String eventName);
-void wipeEEPROM();
-void debug(String message);
-boolean configMode = false;
 
+// Global variables
+// ---------------
+String ssid = "";
+String password = "";
 String DEVICE_TITLE = "ESP8266 Smart Button";
+String SSID_LIST = "";
+boolean configMode = false;
+Ticker spinticker;
+volatile int spincount;
+
+// Procedures
+// ==========
+boolean loadSavedConfig() { 
+  Serial.println("Reading Saved Config....");
+  
+  if (EEPROM.read(0) != 0) {
+    for (int i = 0; i < 32; ++i) {
+      ssid += char(EEPROM.read(i));
+    }
+    Serial.print("SSID: ");
+    Serial.println(ssid);
+    
+    for (int i = 32; i < 96; ++i) {
+      password += char(EEPROM.read(i));
+    }
+    
+    Serial.print("Password: ");
+    Serial.println(password);
+    
+    WiFi.begin(ssid.c_str(), password.c_str());
+    return true;
+  }
+  else {
+    Serial.println("Saved Configuration not found.");
+    return false;
+  }
+}
 
 void spinLEDs() {
     spincount++;
@@ -98,10 +116,10 @@ void flashAll(int times, int delayms) {
 
 }
 
-// Verifica che il collegamento wifi funzioni
 boolean checkWiFiConnection() {
   int count = 0;
   Serial.print("Waiting to connect to the specified WiFi network");
+  
   while ( count < 30 ) {
     if (WiFi.status() == WL_CONNECTED) {
       Serial.println();
@@ -116,33 +134,32 @@ boolean checkWiFiConnection() {
   return false;
 }
 
-
 void powerOff() {
     Serial.println("Power OFF");
     delay(250);
     ESP.deepSleep(0, WAKE_RF_DEFAULT);
 }
 
-
 // ======
 //  MAIN
 // ======
 void setup() {
 
-    // Apro la seriale per debug
+    // Open serial port for debug
     Serial.begin(115200);
+    // Init EEPROM
     EEPROM.begin(512);
 
-    // Inizializzo i tre 3 led (e li forzo a spento)
+    // Initialize spin leds
     for (int i = 0; i < LEDCOUNT; i++) {
         pinMode(LEDPINS[i], OUTPUT);
         digitalWrite(LEDPINS[i], LOW);
     }
 
-    // Esegui ogni SPININTERVAL millisecondi la procedura spinLEDs
+    // Execute (attach) spinLEDs every SPININTERVAL mills
     spinticker.attach(SPININTERVAL, spinLEDs);
 
-    // Se il pin SETUP_PIN è premuto entro in setup mode
+    // If SETUP_PIN pushed, enter to setup mode
     if(digitalRead(SETUP_PIN) == 0) {
        Serial.print("Enter setup mode");
        stopSpinner();
@@ -152,27 +169,22 @@ void setup() {
        
     }
     
-    // Se non riesco a caricare la configurazione lampeggio
+    // If configuration loading failed, enter to setup mode
     if (!loadSavedConfig()) {
         Serial.print("WARNING: Non trovo una configurazione salvata");
-        // Spengo le lucine
+        
         stopSpinner();
-        // Faccio lampeggiare il pulsante per far vedere che non c'è connessione
         flashAll(90, 100);
         setupMode();
-        // Poi mi spengo
-        //powerOff();
         return;  
     }
     
-    // Se non riesco a collegarmi via wifi...
+    // If WIFI check failing, enter to setup mode
     if (!checkWiFiConnection()) {
         Serial.print("ERROR: Non riesco a collegarmi alla wifi");
-        // Spengo le lucine
+  
         stopSpinner();
-        // Faccio lampeggiare il pulsante per far vedere che non c'è connessione
         flashAll(40, 100);
-        // Poi mi spengo
         powerOff();
         return;
     }
@@ -193,7 +205,7 @@ void setup() {
         }
     }
 
-     // Se sono qui è perchè ho giò mandato il messaggio su internet
+     // Se sono qui è perchè ho già effettuato la chiamata su internet
     stopSpinner();
     // Faccio un piccolo lampeggio
     flashAll(10, 300);
@@ -201,38 +213,78 @@ void setup() {
     powerOff();
 }
 
-boolean loadSavedConfig() {
- 
-  
-  Serial.println("Reading Saved Config....");
-  if (EEPROM.read(0) != 0) {
-    for (int i = 0; i < 32; ++i) {
-      ssid += char(EEPROM.read(i));
-    }
-    Serial.print("SSID: ");
-    Serial.println(ssid);
-    for (int i = 32; i < 96; ++i) {
-      password += char(EEPROM.read(i));
-    }
-    Serial.print("Password: ");
-    Serial.println(password);
-    WiFi.begin(ssid.c_str(), password.c_str());
-    return true;
-  }
-  else {
-    Serial.println("Saved Configuration not found.");
-    return false;
-  }
-}
 
 
 // Build the SSID list and setup a software access point for setup mode
 // --------------------------------------------------------------------
+
+// HTML Page maker
+// ---------------
+String makePage(String title, String contents) {
+  
+  
+  String s = "<!DOCTYPE html><html><head>";
+  s += "<meta name=\"viewport\" content=\"width=device-width,user-scalable=0\">";
+  s += "<style>";
+  // Simple Reset CSS
+  s += "*,*:before,*:after{-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}html{font-size:100%;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}html,button,input,select,textarea{font-family:sans-serif}article,aside,details,figcaption,figure,footer,header,hgroup,main,nav,section,summary{display:block}body,form,fieldset,legend,input,select,textarea,button{margin:0}audio,canvas,progress,video{display:inline-block;vertical-align:baseline}audio:not([controls]){display:none;height:0}[hidden],template{display:none}img{border:0}svg:not(:root){overflow:hidden}body{font-family:sans-serif;font-size:16px;font-size:1rem;line-height:22px;line-height:1.375rem;color:#585858;font-weight:400;background:#fff}p{margin:0 0 1em 0}a{color:#cd5c5c;background:transparent;text-decoration:underline}a:active,a:hover{outline:0;text-decoration:none}strong{font-weight:700}em{font-style:italic}";
+  // Basic CSS Styles
+  s += "body{font-family:sans-serif;font-size:16px;font-size:1rem;line-height:22px;line-height:1.375rem;color:#585858;font-weight:400;background:#fff}p{margin:0 0 1em 0}a{color:#cd5c5c;background:transparent;text-decoration:underline}a:active,a:hover{outline:0;text-decoration:none}strong{font-weight:700}em{font-style:italic}h1{font-size:32px;font-size:2rem;line-height:38px;line-height:2.375rem;margin-top:0.7em;margin-bottom:0.5em;color:#343434;font-weight:400}fieldset,legend{border:0;margin:0;padding:0}legend{font-size:18px;font-size:1.125rem;line-height:24px;line-height:1.5rem;font-weight:700}label,button,input,optgroup,select,textarea{color:inherit;font:inherit;margin:0}input{line-height:normal}.input{width:100%}input[type='text'],input[type='email'],input[type='tel'],input[type='date']{height:36px;padding:0 0.4em}input[type='checkbox'],input[type='radio']{box-sizing:border-box;padding:0}";
+  // Custom CSS
+  s += "header{width:100%;background-color: #2c3e50;top: 0;min-height:60px;margin-bottom:21px;font-size:15px;color: #fff}.content-body{padding:0 1em 0 1em}header p{font-size: 1.25rem;float: left;position: relative;z-index: 1000;line-height: normal; margin: 15px 0 0 10px}";
+  s += "</style>";
+  s += "<title>";
+  s += title;
+  s += "</title></head><body>";
+  s += "<header><p>" + DEVICE_TITLE + "</p></header>";
+  s += "<div class=\"content-body\">";
+  s += contents;
+  s += "</div>";
+  s += "</body></html>";
+  return s;
+}
+
+// Decode URL
+// ----------
+String urlDecode(String input) {
+  String s = input;
+  s.replace("%20", " ");
+  s.replace("+", " ");
+  s.replace("%21", "!");
+  s.replace("%22", "\"");
+  s.replace("%23", "#");
+  s.replace("%24", "$");
+  s.replace("%25", "%");
+  s.replace("%26", "&");
+  s.replace("%27", "\'");
+  s.replace("%28", "(");
+  s.replace("%29", ")");
+  s.replace("%30", "*");
+  s.replace("%31", "+");
+  s.replace("%2C", ",");
+  s.replace("%2E", ".");
+  s.replace("%2F", "/");
+  s.replace("%2C", ",");
+  s.replace("%3A", ":");
+  s.replace("%3A", ";");
+  s.replace("%3C", "<");
+  s.replace("%3D", "=");
+  s.replace("%3E", ">");
+  s.replace("%3F", "?");
+  s.replace("%40", "@");
+  s.replace("%5B", "[");
+  s.replace("%5C", "\\");
+  s.replace("%5D", "]");
+  s.replace("%5E", "^");
+  s.replace("%5F", "-");
+  s.replace("%60", "`");
+  return s;
+}
+
 void setupMode() {
   
   configMode = true;
-  String SSID_LIST;
-  
+   
   DNSServer DNS_SERVER;
   const char* AP_SSID = "ESP8266_BUTTON_SETUP";
   const IPAddress AP_IP(192, 168, 1, 1);
@@ -314,69 +366,6 @@ void setupMode() {
  
   WEB_SERVER.begin();
 
-}
-
-// HTML Page maker
-// ---------------
-String makePage(String title, String contents) {
-  
-  
-  String s = "<!DOCTYPE html><html><head>";
-  s += "<meta name=\"viewport\" content=\"width=device-width,user-scalable=0\">";
-  s += "<style>";
-  // Simple Reset CSS
-  s += "*,*:before,*:after{-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}html{font-size:100%;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}html,button,input,select,textarea{font-family:sans-serif}article,aside,details,figcaption,figure,footer,header,hgroup,main,nav,section,summary{display:block}body,form,fieldset,legend,input,select,textarea,button{margin:0}audio,canvas,progress,video{display:inline-block;vertical-align:baseline}audio:not([controls]){display:none;height:0}[hidden],template{display:none}img{border:0}svg:not(:root){overflow:hidden}body{font-family:sans-serif;font-size:16px;font-size:1rem;line-height:22px;line-height:1.375rem;color:#585858;font-weight:400;background:#fff}p{margin:0 0 1em 0}a{color:#cd5c5c;background:transparent;text-decoration:underline}a:active,a:hover{outline:0;text-decoration:none}strong{font-weight:700}em{font-style:italic}";
-  // Basic CSS Styles
-  s += "body{font-family:sans-serif;font-size:16px;font-size:1rem;line-height:22px;line-height:1.375rem;color:#585858;font-weight:400;background:#fff}p{margin:0 0 1em 0}a{color:#cd5c5c;background:transparent;text-decoration:underline}a:active,a:hover{outline:0;text-decoration:none}strong{font-weight:700}em{font-style:italic}h1{font-size:32px;font-size:2rem;line-height:38px;line-height:2.375rem;margin-top:0.7em;margin-bottom:0.5em;color:#343434;font-weight:400}fieldset,legend{border:0;margin:0;padding:0}legend{font-size:18px;font-size:1.125rem;line-height:24px;line-height:1.5rem;font-weight:700}label,button,input,optgroup,select,textarea{color:inherit;font:inherit;margin:0}input{line-height:normal}.input{width:100%}input[type='text'],input[type='email'],input[type='tel'],input[type='date']{height:36px;padding:0 0.4em}input[type='checkbox'],input[type='radio']{box-sizing:border-box;padding:0}";
-  // Custom CSS
-  s += "header{width:100%;background-color: #2c3e50;top: 0;min-height:60px;margin-bottom:21px;font-size:15px;color: #fff}.content-body{padding:0 1em 0 1em}header p{font-size: 1.25rem;float: left;position: relative;z-index: 1000;line-height: normal; margin: 15px 0 0 10px}";
-  s += "</style>";
-  s += "<title>";
-  s += title;
-  s += "</title></head><body>";
-  s += "<header><p>" + DEVICE_TITLE + "</p></header>";
-  s += "<div class=\"content-body\">";
-  s += contents;
-  s += "</div>";
-  s += "</body></html>";
-  return s;
-}
-
-// Decode URL
-// ----------
-String urlDecode(String input) {
-  String s = input;
-  s.replace("%20", " ");
-  s.replace("+", " ");
-  s.replace("%21", "!");
-  s.replace("%22", "\"");
-  s.replace("%23", "#");
-  s.replace("%24", "$");
-  s.replace("%25", "%");
-  s.replace("%26", "&");
-  s.replace("%27", "\'");
-  s.replace("%28", "(");
-  s.replace("%29", ")");
-  s.replace("%30", "*");
-  s.replace("%31", "+");
-  s.replace("%2C", ",");
-  s.replace("%2E", ".");
-  s.replace("%2F", "/");
-  s.replace("%2C", ",");
-  s.replace("%3A", ":");
-  s.replace("%3A", ";");
-  s.replace("%3C", "<");
-  s.replace("%3D", "=");
-  s.replace("%3E", ">");
-  s.replace("%3F", "?");
-  s.replace("%40", "@");
-  s.replace("%5B", "[");
-  s.replace("%5C", "\\");
-  s.replace("%5D", "]");
-  s.replace("%5E", "^");
-  s.replace("%5F", "-");
-  s.replace("%60", "`");
-  return s;
 }
 
 // Button Functions
