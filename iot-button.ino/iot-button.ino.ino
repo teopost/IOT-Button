@@ -37,22 +37,20 @@ const char* IFTTT_KEY= "dR7obzZI6bqblJX5nRpl8YA";
 const char* IFTTT_EVENT = "button";
 const char* IFTTT_NOTIFICATION_EVENT = "iot-event";
 
-// Prototypes
-// ----------
-ESP8266WebServer WEB_SERVER(80);
-void setupMode();
-boolean triggerButtonEvent(String eventName);
-
 // Global variables
 // ---------------
+String DEVICE_TITLE = "IOT-Button";
 String ssid = "";
 String password = "";
-String DEVICE_TITLE = "ESP8266 Smart Button";
 String SSID_LIST = "";
-boolean configMode = false;
+boolean setupModeStatus = false;
+
 Ticker spinticker;
+ESP8266WebServer WEB_SERVER(80);
+
 volatile int spincount;
 
+// ==========
 // Procedures
 // ==========
 boolean loadSavedConfig() { 
@@ -140,79 +138,6 @@ void powerOff() {
     ESP.deepSleep(0, WAKE_RF_DEFAULT);
 }
 
-// ======
-//  MAIN
-// ======
-void setup() {
-
-    // Open serial port for debug
-    Serial.begin(115200);
-    // Init EEPROM
-    EEPROM.begin(512);
-
-    // Initialize spin leds
-    for (int i = 0; i < LEDCOUNT; i++) {
-        pinMode(LEDPINS[i], OUTPUT);
-        digitalWrite(LEDPINS[i], LOW);
-    }
-
-    // Execute (attach) spinLEDs every SPININTERVAL mills
-    spinticker.attach(SPININTERVAL, spinLEDs);
-
-    // If SETUP_PIN pushed, enter to setup mode
-    if(digitalRead(SETUP_PIN) == 0) {
-       Serial.print("Enter setup mode");
-       stopSpinner();
-       flashAll(90, 100);
-       setupMode();
-       return; 
-       
-    }
-    
-    // If configuration loading failed, enter to setup mode
-    if (!loadSavedConfig()) {
-        Serial.print("WARNING: Non trovo una configurazione salvata");
-        
-        stopSpinner();
-        flashAll(90, 100);
-        setupMode();
-        return;  
-    }
-    
-    // If WIFI check failing, enter to setup mode
-    if (!checkWiFiConnection()) {
-        Serial.print("ERROR: Non riesco a collegarmi alla wifi");
-  
-        stopSpinner();
-        flashAll(40, 100);
-        powerOff();
-        return;
-    }
-
-    // Se sono qui e' perchè sono riusco a collegami a internet
-    
-    // Faccio 3 tentativo per mandare la mia chiamata
-    for (int i = 0; i < RETRYCOUNT; i++) {
-      // Se la chiamata va a buon fine
-        if (triggerButtonEvent(IFTTT_EVENT)) {
-            // ... esco dal ciclo
-            break;
-        } else if (i == RETRYCOUNT - 1) {
-            // Se dopo 3 tentativi non riesco a collegarmi a internet, spengo i leg
-            stopSpinner();
-            // Lampeggio in modo diverso
-            flashAll(20, 500);
-        }
-    }
-
-     // Se sono qui è perchè ho già effettuato la chiamata su internet
-    stopSpinner();
-    // Faccio un piccolo lampeggio
-    flashAll(10, 300);
-    // .. e mi spengo
-    powerOff();
-}
-
 
 
 // Build the SSID list and setup a software access point for setup mode
@@ -283,10 +208,10 @@ String urlDecode(String input) {
 
 void setupMode() {
   
-  configMode = true;
+  setupModeStatus = true;
    
   DNSServer DNS_SERVER;
-  const char* AP_SSID = "ESP8266_BUTTON_SETUP";
+  const char* AP_SSID = "IOT-Button_Setup";
   const IPAddress AP_IP(192, 168, 1, 1);
   
   WiFi.mode(WIFI_STA);
@@ -454,8 +379,81 @@ void wipeEEPROM()
   EEPROM.end();
 }
 
+// ======
+//  MAIN
+// ======
+void setup() {
+
+    // Open serial port for debug
+    Serial.begin(115200);
+    // Init EEPROM
+    EEPROM.begin(512);
+
+    // Initialize spin leds
+    for (int i = 0; i < LEDCOUNT; i++) {
+        pinMode(LEDPINS[i], OUTPUT);
+        digitalWrite(LEDPINS[i], LOW);
+    }
+
+    // Execute (attach) spinLEDs every SPININTERVAL mills
+    spinticker.attach(SPININTERVAL, spinLEDs);
+
+    // If SETUP_PIN pushed, enter to setup mode
+    if(digitalRead(SETUP_PIN) == 0) {
+       Serial.print("Enter setup mode");
+       stopSpinner();
+       flashAll(90, 100);
+       setupMode();
+       return; 
+       
+    }
+    
+    // If configuration loading failed, enter to setup mode
+    if (!loadSavedConfig()) {
+        Serial.print("WARNING: Non trovo una configurazione salvata");
+        
+        stopSpinner();
+        flashAll(90, 100);
+        setupMode();
+        return;  
+    }
+    
+    // If WIFI check failing, enter to setup mode
+    if (!checkWiFiConnection()) {
+        Serial.print("ERROR: Non riesco a collegarmi alla wifi");
+  
+        stopSpinner();
+        flashAll(40, 100);
+        powerOff();
+        return;
+    }
+
+    // Se sono qui e' perchè sono riusco a collegami a internet
+    
+    // Faccio 3 tentativo per mandare la mia chiamata
+    for (int i = 0; i < RETRYCOUNT; i++) {
+      // Se la chiamata va a buon fine
+        if (triggerButtonEvent(IFTTT_EVENT)) {
+            // ... esco dal ciclo
+            break;
+        } else if (i == RETRYCOUNT - 1) {
+            // Se dopo 3 tentativi non riesco a collegarmi a internet, spengo i leg
+            stopSpinner();
+            // Lampeggio in modo diverso
+            flashAll(20, 500);
+        }
+    }
+
+     // Se sono qui è perchè ho già effettuato la chiamata su internet
+    stopSpinner();
+    // Faccio un piccolo lampeggio
+    flashAll(10, 300);
+    // .. e mi spengo
+    powerOff();
+}
+
 
 void loop() {
-  if (configMode)
-     WEB_SERVER.handleClient();   
+  if (setupModeStatus)
+      WEB_SERVER.handleClient();   
 }
