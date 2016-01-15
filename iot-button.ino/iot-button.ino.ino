@@ -11,7 +11,7 @@
  * and:
  * 
  * - Cesare (Cece) Gridelli for hardware support
- * - Christian (Gallo) Galeffi for positive strokes
+ * - Christian (Gallochri) Galeffi for positive strokes
  */
 
 #include <ESP8266WiFi.h>
@@ -28,12 +28,15 @@
 // Pin definition
 // --------------
 #define SETUP_PIN 5
-const int LEDPINS[] = { 12 };
+
+#define BLUE_PIN 13
+#define RED_PIN 15
+
 
 // IFTTT Definitions
 // -----------------
 const char* IFTTT_URL= "maker.ifttt.com";
-const char* IFTTT_KEY= "dR7obzZI6bqblJX5nRpl8AY";
+const char* IFTTT_KEY= "";
 const char* IFTTT_EVENT = "button";
 const char* IFTTT_NOTIFICATION_EVENT = "iot-event";
 
@@ -49,6 +52,7 @@ Ticker spinticker;
 ESP8266WebServer WEB_SERVER(80);
 
 volatile int spincount;
+volatile int modcount;
 
 // ==========
 // Procedures
@@ -79,39 +83,54 @@ boolean loadSavedConfig() {
   }
 }
 
-void spinLEDs() {
-    spincount++;
-
-    for (int i = 0; i < LEDCOUNT; i++) {
-        if (spincount % LEDCOUNT == i) {
-            digitalWrite(LEDPINS[i], HIGH);
-        } else {
-            digitalWrite(LEDPINS[i], LOW);
-        }
-    }
+void initLEDS() {
+  
+    pinMode(BLUE_PIN, OUTPUT);
+    digitalWrite(BLUE_PIN, LOW);
+    
+    pinMode(RED_PIN, OUTPUT);
+    digitalWrite(RED_PIN, LOW);
+      
 }
 
-void stopSpinner() {
-    spinticker.detach();
-    for (int i = 0; i < LEDCOUNT; i++) {
-        digitalWrite(LEDPINS[i], LOW);
-    }
-}
-
-void flashAll(int times, int delayms) {
+void flashLED(int times, int delayms) {
     int blinkCount = times;
 
     while (blinkCount-- > 0) {
-        for (int led = 0; led < LEDCOUNT; led++) {
-            if (blinkCount % 2 == 0) {
-                digitalWrite(LEDPINS[led], LOW);
-            } else {
-                digitalWrite(LEDPINS[led], HIGH);
-            }
+        if (blinkCount % 2 == 0) {
+            digitalWrite(BLUE_PIN, LOW);
+        } else {
+            digitalWrite(BLUE_PIN, HIGH);
         }
         delay(delayms);
     }
 
+    // Quando esco il pin deve essere acceso
+    digitalWrite(BLUE_PIN, HIGH);
+
+}
+
+
+void setupFlashLED() {
+    modcount++;
+
+    if (modcount % 2 == 0) {
+        digitalWrite(BLUE_PIN, HIGH);
+    } else {
+        digitalWrite(BLUE_PIN, LOW);
+    }
+
+}
+
+void messageErrorLED() {
+    digitalWrite(RED_PIN, HIGH);
+}
+
+void stopSetupLEDS() {
+    spinticker.detach();
+    
+    digitalWrite(BLUE_PIN, LOW);
+    digitalWrite(RED_PIN, LOW);
 }
 
 boolean checkWiFiConnection() {
@@ -278,7 +297,7 @@ void setupMode() {
       WEB_SERVER.send(200, "text/html", makePage("Wi-Fi Settings", s));
       //ESP.restart();
 
-      stopSpinner();
+      stopSetupLEDS();
       powerOff();
        
     });
@@ -389,20 +408,17 @@ void setup() {
     // Init EEPROM
     EEPROM.begin(512);
 
-    // Initialize spin leds
-    for (int i = 0; i < LEDCOUNT; i++) {
-        pinMode(LEDPINS[i], OUTPUT);
-        digitalWrite(LEDPINS[i], LOW);
-    }
-
+    // Initializzo i pin
+    initLEDS();
+   
     // Execute (attach) spinLEDs every SPININTERVAL mills
-    spinticker.attach(SPININTERVAL, spinLEDs);
+    //spinticker.attach(SPININTERVAL, setupFlashLED);
 
     // If SETUP_PIN pushed, enter to setup mode
     if(digitalRead(SETUP_PIN) == 0) {
        Serial.print("Enter setup mode");
-       stopSpinner();
-       flashAll(90, 100);
+       stopSetupLEDS();
+       spinticker.attach(SPININTERVAL, setupFlashLED);
        setupMode();
        return; 
        
@@ -410,10 +426,9 @@ void setup() {
     
     // If configuration loading failed, enter to setup mode
     if (!loadSavedConfig()) {
-        Serial.print("WARNING: Non trovo una configurazione salvata");
-        
-        stopSpinner();
-        flashAll(90, 100);
+        Serial.print("WARNING: Non trovo una configurazione salvata"); 
+        stopSetupLEDS();
+        spinticker.attach(SPININTERVAL, setupFlashLED);
         setupMode();
         return;  
     }
@@ -421,13 +436,13 @@ void setup() {
     // If WIFI check failing, enter to setup mode
     if (!checkWiFiConnection()) {
         Serial.print("ERROR: Non riesco a collegarmi alla wifi");
-  
-        stopSpinner();
-        flashAll(40, 100);
+        stopSetupLEDS();
         powerOff();
         return;
     }
 
+    flashLED(10, 100);
+  
     // Se sono qui e' perchè sono riusco a collegami a internet
     
     // Faccio 3 tentativo per mandare la mia chiamata
@@ -435,19 +450,21 @@ void setup() {
       // Se la chiamata va a buon fine
         if (triggerButtonEvent(IFTTT_EVENT)) {
             // ... esco dal ciclo
+             flashLED(1, 1);
             break;
         } else if (i == RETRYCOUNT - 1) {
             // Se dopo 3 tentativi non riesco a collegarmi a internet, spengo i leg
-            stopSpinner();
+            messageErrorLED();
+            delay(250);
+            stopSetupLEDS();
             // Lampeggio in modo diverso
-            flashAll(20, 500);
+
         }
     }
 
      // Se sono qui è perchè ho già effettuato la chiamata su internet
-    stopSpinner();
-    // Faccio un piccolo lampeggio
-    flashAll(10, 300);
+    stopSetupLEDS();
+    
     // .. e mi spengo
     powerOff();
 }
