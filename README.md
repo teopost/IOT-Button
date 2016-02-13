@@ -4,20 +4,19 @@ Internet of thing Button based on ESP8266 microcontroller
 
 # Step to step
 
-![](images/schematic.jpg)
+![](images/schematic.jpg | width=640)
 *fig.1 - Schematic (deep sleep mode pin 16)*
 
-![](images/image1.jpg)
+![](images/image1.jpg | width=640)
 *fig.2 - Soldering made*
 
-![](images/image2.jpg)
+![](images/image2.jpg | width=640)
 *fig.3 - Start assembly*
 
-![](images/image3.jpg)
+![](images/image3.jpg | width=640)
 *fig.4 - Last test*
 
 [![](http://img.youtube.com/vi/2St4ugQvWTc/0.jpg)](http://www.youtube.com/watch?v=2St4ugQvWTc)
-
 *video - Job done*
 
 # Examples of use
