@@ -2,6 +2,8 @@
 
 Internet of thing Button based on ESP8266 microcontroller
 
+![](images/schematic.jpg | width=640)
+
 # Step to step
 
 ![](images/schematic.jpg | width=640)
