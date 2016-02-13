@@ -1,6 +1,6 @@
 /*
  * IOT Button
- * 
+ * OK
  * Intenet of thing button based on esp8266
  *
  * Thanks to: 
@@ -12,6 +12,8 @@
  * 
  * - Cesare (Cece) Gridelli for hardware support
  * - Christian (Gallochri) Galeffi for positive strokes
+ * 
+ * This is good !
  */
 
 #include <ESP8266WiFi.h>
@@ -29,14 +31,14 @@
 // --------------
 #define SETUP_PIN 5
 
-#define BLUE_PIN 13
-#define RED_PIN 15
+#define BLUE_PIN 12
+#define RED_PIN 13
 
 
 // IFTTT Definitions
 // -----------------
 const char* IFTTT_URL= "maker.ifttt.com";
-const char* IFTTT_KEY= "";
+const char* IFTTT_KEY= "dR7obzZI6bqblJX5nRpl8Y";
 const char* IFTTT_EVENT = "button";
 const char* IFTTT_NOTIFICATION_EVENT = "iot-event";
 
