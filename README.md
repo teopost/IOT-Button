@@ -1,6 +1,21 @@
 # IOT-Button
 Internet of thing Button based on ESP8266 microcontroller
 
+# Esempi di applicazione
+
+* Invio di notifiche istantanee (SMS, e-mail).
+* Campanello di casa. Quando il pulsante viene premuto, viene invitata una notifica sul telefono.
+* Aiuto. Pulsate per richiedere aiuto in caso di emergenza. Malore
+* Chiamare il taxi
+* Lanciare una stampa
+* Connettersi a IFTT
+* Connettersi a Twitter, Instagram, Facebook, WhatsApp, o qualsiasi altro mezzo sociale con un API.
+* Accendere una luce in qualsiasi parte del mondo.
+* Pulsante per trovare il telefono. Premi il pulsante e il tuo telefono suona
+* La cena e' pronta. Premi il pulsante e tutti vengono avvisati.
+* Per favore chiamami
+* Eccomi qui. Mia figlia arriva a casa e preme il pulsante. Mi arriva un messagio nel telefono e vengo avviato
+* 
 
 # Inspired by:
 
