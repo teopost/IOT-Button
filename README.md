@@ -8,15 +8,16 @@ Internet of thing Button based on ESP8266 microcontroller
 *fig.1 - Schematic (deep sleep mode pin 16)*
 
 ![](images/image1.jpg)
-*fig.3 - Soldering made*
+*fig.2 - Soldering made*
 
 ![](images/image2.jpg)
-*fig.4 - Start assembly*
+*fig.3 - Start assembly*
 
 ![](images/image3.jpg)
-*fig.5 - Last test*
+*fig.4 - Last test*
 
-<iframe width="640" height="480" src="https://www.youtube.com/embed/2St4ugQvWTc" frameborder="0" allowfullscreen></iframe>
+[![](http://img.youtube.com/vi/2St4ugQvWTc/0.jpg)](http://www.youtube.com/watch?v=2St4ugQvWTc)
+
 *video - Job done*
 
 # Examples of use
