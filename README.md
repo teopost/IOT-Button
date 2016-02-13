@@ -1,23 +1,41 @@
 # IOT-Button
+
 Internet of thing Button based on ESP8266 microcontroller
 
-# Esempi di applicazione
+# Step to step
 
-* Invio di notifiche istantanee (SMS, e-mail).
-* Campanello di casa. Quando il pulsante viene premuto, viene invitata una notifica sul telefono.
-* Aiuto. Pulsate per richiedere aiuto in caso di emergenza. Malore
-* Chiamare il taxi
-* Lanciare una stampa
-* Connettersi a IFTT
-* Connettersi a Twitter, Instagram, Facebook, WhatsApp, o qualsiasi altro mezzo sociale con un API.
-* Accendere una luce in qualsiasi parte del mondo.
-* Pulsante per trovare il telefono. Premi il pulsante e il tuo telefono suona
-* La cena e' pronta. Premi il pulsante e tutti vengono avvisati.
-* Per favore chiamami
-* Eccomi qui. Mia figlia arriva a casa e preme il pulsante. Mi arriva un messagio nel telefono e vengo avviato
-* 
+![](images/schematic.jpg)
+*fig.1 - Schematic (deep sleep mode pin 16)*
 
-# Inspired by:
+![](images/image1.jpg)
+*fig.3 - Soldering made*
+
+![](images/image2.jpg)
+*fig.4 - Start assembly*
+
+![](images/image3.jpg)
+*fig.5 - Last test*
+
+<iframe width="640" height="480" src="https://www.youtube.com/embed/2St4ugQvWTc" frameborder="0" allowfullscreen></iframe>
+*video - Job done*
+
+# Examples of use
+
+* Push Notifications
+* Sending mail
+* Doorbell (eg: when the button is pressed, a notification is sent to your phone)
+* Help! (Pulsed for help in an emergency. Eg: A sudden illness)
+* Call a taxi
+* Launch a press
+* Connect to IFTT
+* Connect to Twitter, Instagram, Facebook, WhatsApp, or any other social medium with an API.
+* Turn on a light in any part of the world.
+* Button to find the phone (press the button and your phone rings)
+* Dinner and 'ready (press the button and all are warned)
+* Please call me
+* Here I am (my daughter comes home and presses the button, I get a message in the phone and I get notified)
+
+# Inspirations
 
 * https://www.reboot.ms/forum/threads/flash-firmware-su-esp8266.380/
 * http://benlo.com/esp8266/esp8266Projects.html#hotspotfinder
@@ -25,6 +43,6 @@ Internet of thing Button based on ESP8266 microcontroller
 * http://blog.eikeland.se/2015/07/20/coffee-button/
 * https://github.com/aborruso/albo-pop/wiki/IFTTT#pubblicare-gli-aggiornamenti-di-un-feed-rss-su-un-canale-telegram
 * http://www.jeremyblum.com/2011/03/07/arduino-tutorial-10-interrupts-and-hardware-debouncing/
-* http://www.bristolwatch.com/arduino/arduino_irq.htm 
-* http://www.esp8266.com/wiki/doku.php?id=esp8266-module-family 
-* http://hackaday.com/2015/02/08/hack-allows-esp-01-to-go-to-deep-sleep/ 
+* http://www.bristolwatch.com/arduino/arduino_irq.htm
+* http://www.esp8266.com/wiki/doku.php?id=esp8266-module-family
+* http://hackaday.com/2015/02/08/hack-allows-esp-01-to-go-to-deep-sleep/
