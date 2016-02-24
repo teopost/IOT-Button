@@ -18,7 +18,7 @@ Internet of thing Button based on ESP8266 microcontroller
 
 [![](http://img.youtube.com/vi/2St4ugQvWTc/0.jpg)](http://www.youtube.com/watch?v=2St4ugQvWTc)
 
-*video - Job done*
+*video - This is the result*
 
 # Examples of use
 
